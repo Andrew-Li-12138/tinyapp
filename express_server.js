@@ -50,6 +50,17 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+
+app.post("/urls/:id", (req, res) => {
+  //take long url entered from uls_show form 
+  const newURL = req.body.newURL.trim();
+  //substitue old long url with new url with same id (value in params)
+  urlDatabase[req.params.id] = newURL
+  console.log(urlDatabase)
+  //redirect to /urls after form submission
+  res.redirect('/urls')
+});
+
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
   res.redirect('/urls')
