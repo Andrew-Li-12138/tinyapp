@@ -64,6 +64,10 @@ app.post("/logout", (req, res) => {
   res.redirect("urls/")
 })
 
+app.get("/register", (req, res) => {
+  res.render("urls_register")
+})
+
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, 
     longURL: urlDatabase[req.params.id],
