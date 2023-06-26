@@ -1,5 +1,5 @@
 //function returns a string of 6 random alphanumeric characters for helping generate random short URL ID
-function generateRandomString(urlLength) {
+const generateRandomString = function (urlLength) {
   const characterBase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   let randomString = ''
 
@@ -10,4 +10,15 @@ function generateRandomString(urlLength) {
    return randomString;
 } 
 
-module.exports = { generateRandomString }
+//user lookup helper function
+const userLookupByEmail = function (emailInput, data) {
+  for (let user in data) { console.log(data[user])
+    if (data[user].email === emailInput) {
+      return data[user]
+    } 
+}
+   return null
+}
+
+
+module.exports = { generateRandomString, userLookupByEmail }
