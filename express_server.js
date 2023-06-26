@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser');
-const { generateRandomString } = require('./supportFunctions');
+const { generateRandomString, userLookupByEmail } = require('./supportFunctions');
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -84,12 +84,23 @@ app.get("/register", (req, res) => {
 })
 
 app.post("/register", (req, res) => {
+  if (req.body.email === ""){
+    res.status(400).send("this email address is already registered.")
+    return
+  } 
+
+  matchingResult = userLookupByEmail(req.body.email, users)
+  if (matchingResult !== null) {
+    res.status(400).send("this email address is already registered.")
+    return
+  }
+
   const randomID = generateRandomString(2);
   req.body.id = randomID
   users[randomID] = req.body;
-  res.cookie('user_id', `${randomID}`)
   console.log(users);
 
+  res.cookie('user_id', `${randomID}`)
   res.redirect("/urls")
 }) 
 
@@ -129,3 +140,4 @@ app.get("/u/:id", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
