@@ -4,6 +4,24 @@ const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser');
 const { generateRandomString } = require('./supportFunctions');
 
+const urlDatabase = {
+  "b2xVn2": "http://www.lighthouselabs.ca",
+  "9sm5xK": "http://www.google.com",
+}; // JSON data
+
+const users = {
+  aa: {
+    id: "aa",
+    email: "a@a.com",
+    password: "123",
+  },
+  bb: {
+    id: "bb",
+    email: "b@b.com",
+    password: "456",
+  },
+};
+
 
 app.use(express.urlencoded({ extended: true }));
 
@@ -15,11 +33,6 @@ app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
-}; // JSON data
-
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
@@ -29,15 +42,17 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  const userID = req.cookies["user_id"]
   const templateVars = { 
     urls: urlDatabase,
-    username: req.cookies["username"]
+    user: users[userID]
   }
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new",(req, res) => {
-  const templateVars = { username: req.cookies["username"] };
+  const userID = req.cookies["user_id"]
+  const templateVars = { user: users[userID] };
   res.render("urls_new", templateVars);
 });
 
@@ -53,14 +68,14 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const username = req.body.username
+  const userID = req.body.user_id
   console.log(username)
-  res.cookie('username', `${username}`)
+  res.cookie('user_id', `${userID}`)
   res.redirect('/urls')
 })
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username')
+  res.clearCookie("user_id")
   res.redirect("urls/")
 })
 
@@ -68,10 +83,22 @@ app.get("/register", (req, res) => {
   res.render("urls_register")
 })
 
+app.post("/register", (req, res) => {
+  const randomID = generateRandomString(2);
+  req.body.id = randomID
+  users[randomID] = req.body;
+  res.cookie('user_id', `${randomID}`)
+  console.log(users);
+
+  res.redirect("/urls")
+}) 
+
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, 
+  const userID = req.cookies["user_id"]
+  const templateVars = { 
+    id: req.params.id, 
     longURL: urlDatabase[req.params.id],
-    username: req.cookies["username"]
+    user: users[userID]
   };
   res.render("urls_show", templateVars);
 });
