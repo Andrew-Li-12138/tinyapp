@@ -42,11 +42,11 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const userID = req.cookies["user_id"]
-  const templateVars = { 
+  const userID = req.cookies["user_id"];
+  const templateVars = {
     urls: urlDatabase,
     user: users[userID]
-  }
+  };
   res.render("urls_index", templateVars);
 });
 
@@ -62,60 +62,82 @@ app.post("/urls", (req, res) => {
 });
 
 app.get("/urls/new",(req, res) => {
-  const userID = req.cookies["user_id"]
+  const userID = req.cookies["user_id"];
   const templateVars = { user: users[userID] };
   res.render("urls_new", templateVars);
 });
 
 app.get("/login", (req, res) => {
-  const userID = req.cookies["user_id"]
-  const templateVars = { 
+  const userID = req.cookies["user_id"];
+  const templateVars = {
     user: users[userID]
-  }
-  res.render("login", templateVars)
-})
+  };
+  res.render("login", templateVars);
+});
 
 app.post("/login", (req, res) => {
-  const username = req.body.username
-  console.log(username)
-  res.cookie('username', `${username}`)
-  res.redirect('/urls')
-})
+  const inputEmail = req.body.email;
+  const inputPassword = req.body.password;
+  const user = userLookupByEmail(inputEmail, users);
 
-app.post("/logout", (req, res) => {
-  res.clearCookie("user_id")
-  res.redirect("urls/")
-})
-
-app.get("/register", (req, res) => {
-  res.render("register")
-})
-
-app.post("/register", (req, res) => {
-  if (req.body.email === ""){
-    res.status(400).send("this email address is already registered.")
-    return
-  } 
-
-  matchingResult = userLookupByEmail(req.body.email, users)
-  if (matchingResult !== null) {
-    res.status(400).send("this email address is already registered.")
-    return
+  //If a user with that e-mail cannot be found, return a response with a 403 status code.
+  if (user === null) {
+    res.status(403).send("No matching email found, please register first");
+    return;
   }
 
+  const userID = user.id;
+  const userPassword = user.password;
+
+  //compare the password given in the form with the existing user's password. If it does not match, return a response with a 403 status code.
+  if (inputPassword !== userPassword) {
+    res.status(403).send("Incorrect Password");
+    return;
+  }
+   
+  //If both checks pass, set the user_id cookie with the matching user's random ID, then redirect to /urls.
+  res.cookie('user_id', `${userID}`);
+
+  res.redirect('/urls');
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie("user_id");
+  res.redirect("/login");
+});
+
+app.get("/register", (req, res) => {
+  res.render("register");
+});
+
+app.post("/register", (req, res) => {
+
+  //If email/password are empty, send back response with 400 status code
+  if (req.body.email === "") {
+    res.status(400).send("Email address cannot be empty.");
+    return;
+  }
+  //If email already exists in users object, send response back with 400 status code
+  const matchingResult = userLookupByEmail(req.body.email, users);
+  if (matchingResult !== null) {
+    res.status(400).send("This email address has already been registered.");
+    return;
+  }
+  //Add new user object to global users object ;
   const randomID = generateRandomString(2);
-  req.body.id = randomID
+  req.body.id = randomID;
   users[randomID] = req.body;
   console.log(users);
-
-  res.cookie('user_id', `${randomID}`)
-  res.redirect("/urls")
-}) 
+  //Set userid cookie
+  res.cookie('user_id', `${randomID}`);
+  // Redirect user to /urls page
+  res.redirect("/urls");
+});
 
 app.get("/urls/:id", (req, res) => {
-  const userID = req.cookies["user_id"]
-  const templateVars = { 
-    id: req.params.id, 
+  const userID = req.cookies["user_id"];
+  const templateVars = {
+    id: req.params.id,
     longURL: urlDatabase[req.params.id],
     user: users[userID]
   };
@@ -124,24 +146,24 @@ app.get("/urls/:id", (req, res) => {
 
 
 app.post("/urls/:id", (req, res) => {
-  //take long url entered from uls_show form 
+  //take long url entered from uls_show form
   const newURL = req.body.newURL.trim();
   //substitue old long url with new url with same id (value in params)
-  urlDatabase[req.params.id] = newURL
-  console.log(urlDatabase)
+  urlDatabase[req.params.id] = newURL;
+  console.log(urlDatabase);
   //redirect to /urls after form submission
-  res.redirect('/urls')
+  res.redirect('/urls');
 });
 
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
-  res.redirect('/urls')
-})
+  res.redirect('/urls');
+});
 
 // when click at shortened url from /urls/:id page (/u/:id link), redirect to its longURL address
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
-  console.log(longURL)
+  console.log(longURL);
   res.redirect(longURL);
 });
 
