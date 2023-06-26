@@ -50,12 +50,6 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-app.get("/urls/new",(req, res) => {
-  const userID = req.cookies["user_id"]
-  const templateVars = { user: users[userID] };
-  res.render("urls_new", templateVars);
-});
-
 app.post("/urls", (req, res) => {
   console.log(req.body);// Log the POST request body to the console
   //add key value pair - randomString : newly entered long url - to urlDatabse
@@ -67,10 +61,24 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${randomString}`);
 });
 
+app.get("/urls/new",(req, res) => {
+  const userID = req.cookies["user_id"]
+  const templateVars = { user: users[userID] };
+  res.render("urls_new", templateVars);
+});
+
+app.get("/login", (req, res) => {
+  const userID = req.cookies["user_id"]
+  const templateVars = { 
+    user: users[userID]
+  }
+  res.render("login", templateVars)
+})
+
 app.post("/login", (req, res) => {
-  const userID = req.body.user_id
+  const username = req.body.username
   console.log(username)
-  res.cookie('user_id', `${userID}`)
+  res.cookie('username', `${username}`)
   res.redirect('/urls')
 })
 
@@ -80,7 +88,7 @@ app.post("/logout", (req, res) => {
 })
 
 app.get("/register", (req, res) => {
-  res.render("urls_register")
+  res.render("register")
 })
 
 app.post("/register", (req, res) => {
