@@ -20,5 +20,18 @@ const userLookupByEmail = function (emailInput, data) {
    return null
 }
 
+//returns the URLs where the userID is equal to the id of the currently logged-in user
+const urlsForUser = function (cookieID, dataURL) {
+  let result = {}
+  for (let dataID in dataURL) {
+    if (result[!dataID]){
+        result[dataID] = {};
+    }
+    if (cookieID === dataURL[dataID]['userID']){
+        result[dataID]= dataURL[dataID]
+    }
+  }
+  return result
+}
 
-module.exports = { generateRandomString, userLookupByEmail }
+module.exports = { generateRandomString, userLookupByEmail, urlsForUser }
