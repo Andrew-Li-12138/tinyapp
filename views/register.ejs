@@ -8,6 +8,7 @@
 </head>
 <body>
   <main style="margin: 1em;">
+    <% if (!user) { %>
     <h3> Create Account </h3>
     <form  action="/register" method="POST">
       <div>
@@ -29,6 +30,10 @@
         <button type="submit">Submit</button>
       </div>
     </form>
+    <% } else { %>
+      <a href="/urls">You are already logged in</a>
+      <% } %>
   </main>
+  <a href="/urls">Back to My URLs</a>
 </body>
 </html>
