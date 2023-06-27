@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser');
+const bcrypt = require("bcryptjs")
 const { generateRandomString, userLookupByEmail, urlsForUser } = require('./supportFunctions');
 
 const urlDatabase = {
@@ -16,15 +17,16 @@ const urlDatabase = {
 };
 
 const users = {
+  //note passwords are hashed by bcrypt
   aa: {
     id: "aa",
     email: "a@a.com",
-    password: "123",
+    password: bcrypt.hashSync("123", 5),
   },
   bb: {
     id: "bb",
     email: "b@b.com",
-    password: "456",
+    password: bcrypt.hashSync("456", 5),
   },
 };
 
@@ -96,7 +98,7 @@ app.get("/login", (req, res) => {
   //If the user is logged in, redirect to GET /urls
   //if(templateVars.user){
   // res.redirect("/urls")
-  //} This logic is handled in login.ejs by showing "already logged in" message and a link back to /urls
+  //} This logic is commented out because it is handled in login.ejs by showing "already logged in" message and a link back to /urls
   res.render("login", templateVars);
 });
 
@@ -112,10 +114,10 @@ app.post("/login", (req, res) => {
   }
 
   const userID = user.id;
-  const userPassword = user.password;
+  const userPassword = user.password; //userPassword was hashed by bcrypt when registered and in database 
 
   //compare the password given in the form with the existing user's password. If it does not match, return a response with a 403 status code.
-  if (inputPassword !== userPassword) {
+  if (!bcrypt.compareSync(inputPassword, userPassword)) {
     res.status(403).send("Incorrect Password");
     return;
   }
@@ -137,7 +139,7 @@ app.get("/register", (req, res) => {
   //If the user is logged in, redirect to GET /urls
   //if(templateVars.user){
    // res.redirect("/urls")
-   //}  This logic is handled in registered.ejs by showing "already logged in" message and a link back to /urls
+   //} This logic commented out because it is handled in registered.ejs by showing "already logged in" message and a link back to /urls
   res.render("register", templateVars);
 });
 
@@ -148,18 +150,28 @@ app.post("/register", (req, res) => {
     res.status(400).send("Email address cannot be empty.");
     return;
   }
+
+  if (req.body.password === "") {
+    res.status(400).send("Password cannot be empty.");
+    return;
+  }
   //If email already exists in users object, send response back with 400 status code
   const matchingResult = userLookupByEmail(req.body.email, users);
   if (matchingResult !== null) {
     res.status(400).send("This email address has already been registered.");
     return;
   }
-  //Add new user object to global users object ;
+  
   const randomID = generateRandomString(2);
   req.body.id = randomID;
+  //use bcrypt.hashSync and save the resulting hash of the password
+  const hashedPassword = bcrypt.hashSync(req.body.password, 5)
+  req.body.password = hashedPassword
+  
+  //Add new user object to global users object ;
   users[randomID] = req.body;
   console.log(users);
-  //Set userid cookie
+  //Set user_id cookie
   res.cookie('user_id', `${randomID}`);
   // Redirect user to /urls page
   res.redirect("/urls");
