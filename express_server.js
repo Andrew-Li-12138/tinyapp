@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session')
 const bcrypt = require("bcryptjs")
 const { generateRandomString, userLookupByEmail, urlsForUser } = require('./supportFunctions');
 
@@ -33,7 +33,13 @@ const users = {
 
 app.use(express.urlencoded({ extended: true }));
 
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['encode'],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
 
 app.set("view engine", "ejs");
 
@@ -51,20 +57,21 @@ app.get("/hello", (req, res) => {
 
 
 app.get("/urls", (req, res) => {
-  const userID = req.cookies["user_id"];
-  console.log(userID)
+  const userID = req.session.user_id;
+
   const loginURL = urlsForUser(userID, urlDatabase)
-  console.log(loginURL)
+
   const templateVars = {
     urls: loginURL,
     user: users[userID]
   };
-  res.render("urls_index", templateVars);
+  res.render("urls_index", templateVars); 
+  //please note logic of allowing only logged in visit is writte in urls_index
 });
 
 app.post("/urls", (req, res) => {
   //If the user is not logged in, respond with an HTML message that tells the user why they cannot shorten URLs.
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const templateVars = { user: users[userID] }
   if(!templateVars.user){
     res.status(403).send("You need to login first")
@@ -83,17 +90,18 @@ app.post("/urls", (req, res) => {
 });
 
 app.get("/urls/new",(req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const templateVars = { user: users[userID] };
   //If the user is not logged in, redirect to GET /login
   if(!userID){
     res.redirect("/login")
+    return
   }
   res.render("urls_new", templateVars);
 });
 
 app.get("/login", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const templateVars = { user: users[userID] };
   //If the user is logged in, redirect to GET /urls
   //if(templateVars.user){
@@ -123,18 +131,18 @@ app.post("/login", (req, res) => {
   }
    
   //If both checks pass, set the user_id cookie with the matching user's random ID, then redirect to /urls.
-  res.cookie('user_id', `${userID}`);
+  req.session.user_id = userID
 
   res.redirect('/urls');
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/login");
 });
 
 app.get("/register", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const templateVars = { user: users[userID]};
   //If the user is logged in, redirect to GET /urls
   //if(templateVars.user){
@@ -163,6 +171,7 @@ app.post("/register", (req, res) => {
   }
   
   const randomID = generateRandomString(2);
+  
   req.body.id = randomID;
   //use bcrypt.hashSync and save the resulting hash of the password
   const hashedPassword = bcrypt.hashSync(req.body.password, 5)
@@ -170,15 +179,16 @@ app.post("/register", (req, res) => {
   
   //Add new user object to global users object ;
   users[randomID] = req.body;
-  console.log(users);
-  //Set user_id cookie
-  res.cookie('user_id', `${randomID}`);
+
+   //Set user_id cookie
+   req.session.user_id = randomID
+
   // Redirect user to /urls page
   res.redirect("/urls");
 });
 
 app.get("/urls/:id", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const userData = urlDatabase[req.params.id]
    //If a user tries to access a shortened url that does not exist we should send them a relevant message
    if(!userData) {
@@ -206,7 +216,7 @@ app.get("/urls/:id", (req, res) => {
 
 
 app.post("/urls/:id", (req, res) => {
-  const userID = req.cookies["user_id"]
+  const userID = req.session.user_id
   const userData = urlDatabase[req.params.id]
    //If a user tries to access a shortened url that does not exist we should send them a relevant message
    if(!userData) {
@@ -235,7 +245,7 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const userData = urlDatabase[req.params.id]
     //If a user tries to access a shortened url that does not exist we should send them a relevant message
     if(!userData) {
@@ -260,13 +270,12 @@ app.post("/urls/:id/delete", (req, res) => {
 // when click at shortened url from /urls/:id page (/u/:id link), redirect to its longURL address
 app.get("/u/:id", (req, res) => {
   const userData = urlDatabase[req.params.id];
-  const longURL = urlDatabase[req.params.id]['longURL']
+  const longURL = userData['longURL']
   //If a user tries to access a shortened url that does not exist we should send them a relevant message
   if(!userData) {
     res.status(404).send("This short URL doesn't exist in database")
     return
   }
-  console.log(userID);
   res.redirect(longURL);
 });
 
