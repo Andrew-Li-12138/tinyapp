@@ -12,7 +12,7 @@ const generateRandomString = function (urlLength) {
 
 //user lookup helper function
 const userLookupByEmail = function (emailInput, data) {
-  for (let user in data) { console.log(data[user])
+  for (let user in data) { 
     if (data[user].email === emailInput) {
       return data[user]
     } 
