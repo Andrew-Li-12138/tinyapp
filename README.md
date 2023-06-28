@@ -4,7 +4,7 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product ScreeShots
 
-### /ulrs is only accessible by logged in users and provided link for loggin or register
+### /ulrs is only accessible by logged in users. This page also provides link for loggin or register 
 !["/ulrs is only accessible by logged in users and provided link for loggin or register"](https://github.com/Andrew-Li-12138/tinyapp/blob/main/docs/urls.png?raw=true)
 
 ### /register asks for users email and password
