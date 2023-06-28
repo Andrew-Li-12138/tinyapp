@@ -42,7 +42,11 @@ app.use(cookieSession({
 app.set("view engine", "ejs");
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  const userID = req.session.user_id
+  if(!userID){
+    res.redirect("/urls")
+  }
+    res.redirect("/login")
 });
 
 app.get("/urls.json", (req, res) => {
