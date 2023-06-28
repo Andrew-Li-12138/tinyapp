@@ -44,9 +44,11 @@ app.set("view engine", "ejs");
 app.get("/", (req, res) => {
   const userID = req.session.user_id
   if(!userID){
+    res.redirect("/login")
+  } else {
     res.redirect("/urls")
   }
-    res.redirect("/login")
+   
 });
 
 app.get("/urls.json", (req, res) => {
